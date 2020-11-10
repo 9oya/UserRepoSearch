@@ -12,7 +12,10 @@ class SearchPresenter: SearchModuleInput, SearchViewOutput, SearchInteractorOutp
     var interactor: SearchInteractorInput!
     var router: SearchRouterInput!
 
+    // MARK: SearchViewOutput
     func viewIsReady() {
-
+        view.setupInitialState()
     }
+    
+    // MARK: SearchInteractorOutput
 }

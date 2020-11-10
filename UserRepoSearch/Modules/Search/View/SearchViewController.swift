@@ -13,8 +13,8 @@ import RxCocoa
 class SearchViewController: UIViewController, SearchViewInput {
     
     // MARK: Properties
-    var searchBar: UISearchBar!
-    var tableView: UITableView!
+    var userSearchBar: UISearchBar!
+    var userTableView: UITableView!
     
     var output: SearchViewOutput!
     let configurator = SearchModuleConfigurator()
@@ -38,7 +38,7 @@ class SearchViewController: UIViewController, SearchViewInput {
 
     // MARK: SearchViewInput
     func setupInitialState() {
-        searchBar.rx.text
+        userSearchBar.rx.text
             .orEmpty
             .debounce(.milliseconds(300), scheduler: MainScheduler.instance)
             .distinctUntilChanged()
@@ -46,6 +46,10 @@ class SearchViewController: UIViewController, SearchViewInput {
             .subscribe(onNext: { [unowned self] query in
                 
             }).disposed(by: disposeBag)
+    }
+    
+    func reloadUserTableView() {
+        userTableView.reloadData()
     }
 }
 
@@ -59,35 +63,35 @@ extension SearchViewController {
         navigationItem.title = "Github Repos"
         
         // MARK: Setup sub-view properties
-        searchBar = {
+        userSearchBar = {
             let searchBar = UISearchBar()
             searchBar.translatesAutoresizingMaskIntoConstraints = false
             return searchBar
         }()
-        tableView = {
+        userTableView = {
             let tableView = UITableView()
             tableView.translatesAutoresizingMaskIntoConstraints = false
             return tableView
         }()
         
         // MARK: Setup UI Hierarchy
-        view.addSubview(searchBar)
-        view.addSubview(tableView)
+        view.addSubview(userSearchBar)
+        view.addSubview(userTableView)
         
         // MARK: DI
         
         // MARK: Setup constraints
-        let searchBarConstraints = [
-            searchBar.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 0),
-            searchBar.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 0),
-            searchBar.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: 0)
+        let userSearchBarConstraints = [
+            userSearchBar.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 0),
+            userSearchBar.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 0),
+            userSearchBar.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: 0)
         ]
-        let tableViewConstraints = [
-            tableView.topAnchor.constraint(equalTo: searchBar.bottomAnchor, constant: 0),
-            tableView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 0),
-            tableView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: 0),
-            tableView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: 0)
+        let userTableViewConstraints = [
+            userTableView.topAnchor.constraint(equalTo: userSearchBar.bottomAnchor, constant: 0),
+            userTableView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 0),
+            userTableView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: 0),
+            userTableView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: 0)
         ]
-        NSLayoutConstraint.activate(searchBarConstraints + tableViewConstraints)
+        NSLayoutConstraint.activate(userSearchBarConstraints + userTableViewConstraints)
     }
 }
