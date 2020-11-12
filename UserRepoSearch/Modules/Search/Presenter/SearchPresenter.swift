@@ -6,6 +6,8 @@
 //  Copyright © 2020 9oya.com. All rights reserved.
 //
 
+import UIKit
+
 class SearchPresenter: SearchModuleInput, SearchViewOutput, SearchInteractorOutput {
 
     weak var view: SearchViewInput!
@@ -17,5 +19,25 @@ class SearchPresenter: SearchModuleInput, SearchViewOutput, SearchInteractorOutp
         view.setupInitialState()
     }
     
+    func searchUsersWith(keyword: String, sort: SortType, order: OrderType) {
+        interactor.searchUsersWith(keyword: keyword, sort: sort, order: order)
+    }
+    
+    func resetSearchUserResult() {
+        interactor.resetSearchUserResult()
+    }
+    
+    func getNumberOfItemModels() -> Int {
+        return interactor.getNumberOfItemModels()
+    }
+    
+    func getItemModelAt(indexPath: IndexPath) -> ItemModel {
+        return interactor.getItemModelAt(indexPath: indexPath)
+    }
+    
     // MARK: SearchInteractorOutput
+    func reloadUserTableView() {
+        view.reloadUserTableView()
+    }
+    
 }

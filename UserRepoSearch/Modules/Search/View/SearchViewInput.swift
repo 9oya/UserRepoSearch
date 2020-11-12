@@ -14,4 +14,6 @@ protocol SearchViewInput: class {
     */
 
     func setupInitialState()
+    
+    func reloadUserTableView()
 }

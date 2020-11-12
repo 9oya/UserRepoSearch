@@ -6,6 +6,8 @@
 //  Copyright © 2020 9oya.com. All rights reserved.
 //
 
+import UIKit
+
 protocol SearchViewOutput {
 
     /**
@@ -14,4 +16,13 @@ protocol SearchViewOutput {
     */
 
     func viewIsReady()
+    
+    func searchUsersWith(keyword: String, sort: SortType, order: OrderType)
+    
+    func resetSearchUserResult()
+    
+    func getNumberOfItemModels() -> Int
+    
+    func getItemModelAt(indexPath: IndexPath) -> ItemModel
+    
 }

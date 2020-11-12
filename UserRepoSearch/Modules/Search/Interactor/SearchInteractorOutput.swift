@@ -10,4 +10,6 @@ import Foundation
 
 protocol SearchInteractorOutput: class {
 
+    func reloadUserTableView()
+    
 }

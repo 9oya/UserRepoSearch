@@ -9,5 +9,13 @@
 import Foundation
 
 protocol SearchInteractorInput {
-
+    
+    func searchUsersWith(keyword: String, sort: SortType, order: OrderType)
+    
+    func resetSearchUserResult()
+    
+    func getNumberOfItemModels() -> Int
+    
+    func getItemModelAt(indexPath: IndexPath) -> ItemModel
+    
 }

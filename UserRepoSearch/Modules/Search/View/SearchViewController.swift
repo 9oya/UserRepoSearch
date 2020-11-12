@@ -44,7 +44,7 @@ class SearchViewController: UIViewController, SearchViewInput {
             .distinctUntilChanged()
             .filter { !$0.isEmpty }
             .subscribe(onNext: { [unowned self] query in
-                
+                self.output.searchUsersWith(keyword: query, sort: .repos, order: .desc)
             }).disposed(by: disposeBag)
     }
     

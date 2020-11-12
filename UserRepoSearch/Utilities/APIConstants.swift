@@ -38,3 +38,20 @@ enum OrderType: String {
     case desc = "desc"
     case asc = "asc"
 }
+
+enum HTTPStatus: Int {
+  case ok = 200
+
+  case badRequest = 400
+  case notAuthorized = 401
+  case paymentRequired = 402
+  case forbidden = 403
+  case notFound = 404
+
+  case internalServerError = 500
+}
+
+enum BasicAuth: String {
+    case username = "9oya"
+    case password = "af001f6b4a92a2efd0fb36dee8f787898203f4b0"
+}
