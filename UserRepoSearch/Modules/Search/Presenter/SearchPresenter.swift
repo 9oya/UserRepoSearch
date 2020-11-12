@@ -35,6 +35,10 @@ class SearchPresenter: SearchModuleInput, SearchViewOutput, SearchInteractorOutp
         return interactor.getItemModelAt(indexPath: indexPath)
     }
     
+    func getItemModels() -> [ItemModel]? {
+        return interactor.getItemModels()
+    }
+    
     // MARK: SearchInteractorOutput
     func reloadUserTableView() {
         view.reloadUserTableView()

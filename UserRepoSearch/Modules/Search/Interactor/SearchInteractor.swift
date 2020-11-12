@@ -82,6 +82,10 @@ class SearchInteractor: SearchInteractorInput {
     func getItemModelAt(indexPath: IndexPath) -> ItemModel {
         return itemModels![indexPath.row]
     }
+    
+    func getItemModels() -> [ItemModel]? {
+        return itemModels
+    }
 }
 
 //MARK: RequestObservable class

@@ -26,7 +26,7 @@ class UserTableCell: UITableViewCell {
         fatalError("init(coder:) has not been implemented")
     }
 
-    // MARK: Layer helper
+    // MARK: Load views
     private func setupLayout() {
         // Configure subview properties
         profileImgView = {
@@ -57,9 +57,14 @@ class UserTableCell: UITableViewCell {
             profileImgView.widthAnchor.constraint(equalToConstant: 50),
             profileImgView.heightAnchor.constraint(equalToConstant: 50)
         ]
-        
-        
-        
-        NSLayoutConstraint.activate(profileImgViewConstraints)
+        let nickNameLabelConstraints = [
+            nickNameLabel.topAnchor.constraint(equalTo: profileImgView.topAnchor, constant: 10),
+            nickNameLabel.leadingAnchor.constraint(equalTo: profileImgView.trailingAnchor, constant: 10)
+        ]
+        let reposCntLabelConstraints = [
+            reposCntLabel.topAnchor.constraint(equalTo: nickNameLabel.bottomAnchor, constant: 10),
+            reposCntLabel.leadingAnchor.constraint(equalTo: nickNameLabel.leadingAnchor, constant: 0)
+        ]
+        NSLayoutConstraint.activate(profileImgViewConstraints + nickNameLabelConstraints + reposCntLabelConstraints)
     }
 }

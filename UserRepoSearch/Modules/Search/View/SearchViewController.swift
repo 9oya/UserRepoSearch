@@ -10,7 +10,7 @@ import UIKit
 import RxSwift
 import RxCocoa
 
-class SearchViewController: UIViewController, SearchViewInput {
+class SearchViewController: UIViewController, SearchViewInput, UITableViewDelegate {
     
     // MARK: Properties
     var userSearchBar: UISearchBar!
@@ -35,7 +35,7 @@ class SearchViewController: UIViewController, SearchViewInput {
         super.viewDidLoad()
         output.viewIsReady()
     }
-
+    
     // MARK: SearchViewInput
     func setupInitialState() {
         userSearchBar.rx.text
@@ -46,10 +46,28 @@ class SearchViewController: UIViewController, SearchViewInput {
             .subscribe(onNext: { [unowned self] query in
                 self.output.searchUsersWith(keyword: query, sort: .repos, order: .desc)
             }).disposed(by: disposeBag)
+        
+        userTableView.rx
+            .setDelegate(self)
+            .disposed(by: disposeBag)
     }
     
     func reloadUserTableView() {
-        userTableView.reloadData()
+        //        userTableView.reloadData()
+        
+        
+        let itemModelRelay: BehaviorRelay<[ItemModel]> = BehaviorRelay(value: output.getItemModels()!)
+        
+        itemModelRelay.asObservable()
+            .bind(to: userTableView.rx.items(cellIdentifier: userTableCellId, cellType: UserTableCell.self)) { idx, element, cell in
+                
+                
+            }.disposed(by: disposeBag)
+    }
+    
+    // MARK: UITableViewDelegate
+    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        return 70
     }
 }
 
@@ -62,7 +80,7 @@ extension SearchViewController {
         view.backgroundColor = .orange
         navigationItem.title = "Github Repos"
         
-        // MARK: Setup sub-view properties
+        // MARK: Configure subview properties
         userSearchBar = {
             let searchBar = UISearchBar()
             searchBar.translatesAutoresizingMaskIntoConstraints = false

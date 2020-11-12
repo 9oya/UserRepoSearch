@@ -25,4 +25,6 @@ protocol SearchViewOutput {
     
     func getItemModelAt(indexPath: IndexPath) -> ItemModel
     
+    func getItemModels() -> [ItemModel]?
+    
 }

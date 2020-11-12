@@ -18,4 +18,6 @@ protocol SearchInteractorInput {
     
     func getItemModelAt(indexPath: IndexPath) -> ItemModel
     
+    func getItemModels() -> [ItemModel]?
+    
 }
