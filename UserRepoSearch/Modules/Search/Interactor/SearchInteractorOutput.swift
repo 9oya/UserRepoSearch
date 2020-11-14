@@ -10,6 +10,8 @@ import Foundation
 
 protocol SearchInteractorOutput: class {
 
-    func reloadUserTableView()
+    func finishedReloadUserTableView()
+    
+    func scrollUserTableViewToTop()
     
 }

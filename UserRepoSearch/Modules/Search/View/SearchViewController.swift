@@ -16,6 +16,10 @@ class SearchViewController: UIViewController, SearchViewInput, UITableViewDelega
     var userSearchBar: UISearchBar!
     var userTableView: UITableView!
     
+    var keyword: String?
+    var lastContentOffsetY: CGFloat = 0.0
+    var isScrollToLoading: Bool = false
+    
     var output: SearchViewOutput!
     let configurator = SearchModuleConfigurator()
     let disposeBag = DisposeBag()
@@ -38,36 +42,67 @@ class SearchViewController: UIViewController, SearchViewInput, UITableViewDelega
     
     // MARK: SearchViewInput
     func setupInitialState() {
+        
+        // INPUT
         userSearchBar.rx.text
             .orEmpty
             .debounce(.milliseconds(300), scheduler: MainScheduler.instance)
             .distinctUntilChanged()
             .filter { !$0.isEmpty }
             .subscribe(onNext: { [unowned self] query in
-                self.output.searchUsersWith(keyword: query, sort: .repos, order: .desc)
+                self.keyword = query
+                self.output.searchUsersWith(keyword: query, sort: .repos, order: .desc, isScrolled: false)
+                self.view.hideSpinner()
+                self.view.showSpinner()
+            }).disposed(by: disposeBag)
+        
+        userTableView.rx.contentOffset
+            .subscribe(onNext: { offset in
+                
+                let contentSizeHeight = self.userTableView.contentSize.height
+                let edgeOfScrollToLoadMore = self.userTableView.frame.size.height + offset.y + 200
+                
+                if (contentSizeHeight != 0) && (contentSizeHeight < edgeOfScrollToLoadMore) {
+                    if self.lastContentOffsetY > offset.y {
+                        // ...Scrolled up
+                    } else {
+                        self.lastContentOffsetY = offset.y
+                        if self.isScrollToLoading || self.keyword == nil {
+                            return
+                        }
+                        self.isScrollToLoading = true
+                        self.output.searchUsersWith(keyword: self.keyword!, sort: .repos, order: .desc, isScrolled: true)
+                        self.view.hideSpinner()
+                        self.view.showSpinner()
+                    }
+                }
+                
             }).disposed(by: disposeBag)
         
         userTableView.rx
             .setDelegate(self)
             .disposed(by: disposeBag)
+        
+        // OUTPUT
+        output.getItemModelsRelay().asObservable()
+            .bind(to: userTableView.rx.items(cellIdentifier: userTableCellId, cellType: UserTableCell.self)) { idx, itemModel, cell in
+                self.output.configureUserTalbeCell(cell: cell, itemModel: itemModel)
+            }.disposed(by: disposeBag)
     }
     
-    func reloadUserTableView() {
-        //        userTableView.reloadData()
-        
-        
-        let itemModelRelay: BehaviorRelay<[ItemModel]> = BehaviorRelay(value: output.getItemModels()!)
-        
-        itemModelRelay.asObservable()
-            .bind(to: userTableView.rx.items(cellIdentifier: userTableCellId, cellType: UserTableCell.self)) { idx, element, cell in
-                
-                
-            }.disposed(by: disposeBag)
+    func finishedReloadUserTableView() {
+        isScrollToLoading = false
+        view.hideSpinner()
+    }
+    
+    func scrollUserTableViewToTop() {
+        lastContentOffsetY = 0
+        userTableView.scrollToRow(at: IndexPath(row: 0, section: 0), at: .top, animated: false)
     }
     
     // MARK: UITableViewDelegate
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return 70
+        return 80
     }
 }
 
@@ -76,11 +111,11 @@ extension SearchViewController {
     // MARK: Load views
     private func setupLayout() {
         
-        // MARK: Setup view
+        // Setup view
         view.backgroundColor = .orange
         navigationItem.title = "Github Repos"
         
-        // MARK: Configure subview properties
+        // Configure subview properties
         userSearchBar = {
             let searchBar = UISearchBar()
             searchBar.translatesAutoresizingMaskIntoConstraints = false
@@ -88,17 +123,16 @@ extension SearchViewController {
         }()
         userTableView = {
             let tableView = UITableView()
+            tableView.register(UserTableCell.self, forCellReuseIdentifier: userTableCellId)
             tableView.translatesAutoresizingMaskIntoConstraints = false
             return tableView
         }()
         
-        // MARK: Setup UI Hierarchy
+        // Setup ui Hierarchy
         view.addSubview(userSearchBar)
         view.addSubview(userTableView)
         
-        // MARK: DI
-        
-        // MARK: Setup constraints
+        // Setup ui constraints
         let userSearchBarConstraints = [
             userSearchBar.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 0),
             userSearchBar.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 0),

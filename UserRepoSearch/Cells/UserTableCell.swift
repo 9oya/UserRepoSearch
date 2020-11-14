@@ -36,11 +36,14 @@ class UserTableCell: UITableViewCell {
         }()
         nickNameLabel = {
             let label = UILabel()
+            label.font = .systemFont(ofSize: 15, weight: .regular)
             label.translatesAutoresizingMaskIntoConstraints = false
             return label
         }()
         reposCntLabel = {
             let label = UILabel()
+            label.font = .systemFont(ofSize: 11, weight: .regular)
+            label.textColor = .systemGray2
             label.translatesAutoresizingMaskIntoConstraints = false
             return label
         }()
@@ -51,18 +54,19 @@ class UserTableCell: UITableViewCell {
         addSubview(reposCntLabel)
         
         // Setup ui constraints
+        let heightForProfileImgView: CGFloat = 50.0
         let profileImgViewConstraints = [
             profileImgView.centerYAnchor.constraint(equalTo: centerYAnchor, constant: 0),
             profileImgView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 5),
-            profileImgView.widthAnchor.constraint(equalToConstant: 50),
-            profileImgView.heightAnchor.constraint(equalToConstant: 50)
+            profileImgView.widthAnchor.constraint(equalToConstant: heightForProfileImgView),
+            profileImgView.heightAnchor.constraint(equalToConstant: heightForProfileImgView)
         ]
         let nickNameLabelConstraints = [
-            nickNameLabel.topAnchor.constraint(equalTo: profileImgView.topAnchor, constant: 10),
+            nickNameLabel.topAnchor.constraint(equalTo: profileImgView.topAnchor, constant: heightForProfileImgView * 0.1),
             nickNameLabel.leadingAnchor.constraint(equalTo: profileImgView.trailingAnchor, constant: 10)
         ]
         let reposCntLabelConstraints = [
-            reposCntLabel.topAnchor.constraint(equalTo: nickNameLabel.bottomAnchor, constant: 10),
+            reposCntLabel.bottomAnchor.constraint(equalTo: profileImgView.bottomAnchor, constant: -heightForProfileImgView * 0.1),
             reposCntLabel.leadingAnchor.constraint(equalTo: nickNameLabel.leadingAnchor, constant: 0)
         ]
         NSLayoutConstraint.activate(profileImgViewConstraints + nickNameLabelConstraints + reposCntLabelConstraints)

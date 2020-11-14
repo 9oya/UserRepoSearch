@@ -11,10 +11,10 @@ import Foundation
 struct SearchModel: Codable {
     let total_count: Int
     let incomplete_results: Bool
-    let items: [ItemModel]?
+    let items: [ItemModel]
 }
 
-struct ItemModel: Codable {
+class ItemModel: Codable {
     let login: String
     let id: Int
     let node_id: String
@@ -34,4 +34,7 @@ struct ItemModel: Codable {
     let type: String
     let site_admin: Bool
     let score: Float
+    
+    var avatarUrlData: Data?
+    var publicReposCnt: Int?
 }

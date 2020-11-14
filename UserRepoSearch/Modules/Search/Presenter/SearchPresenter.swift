@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import RxCocoa
 
 class SearchPresenter: SearchModuleInput, SearchViewOutput, SearchInteractorOutput {
 
@@ -19,29 +20,25 @@ class SearchPresenter: SearchModuleInput, SearchViewOutput, SearchInteractorOutp
         view.setupInitialState()
     }
     
-    func searchUsersWith(keyword: String, sort: SortType, order: OrderType) {
-        interactor.searchUsersWith(keyword: keyword, sort: sort, order: order)
+    func searchUsersWith(keyword: String, sort: SortType, order: OrderType, isScrolled: Bool) {
+        interactor.searchUsersWith(keyword: keyword, sort: sort, order: order, isScrolled: isScrolled)
     }
     
-    func resetSearchUserResult() {
-        interactor.resetSearchUserResult()
+    func getItemModelsRelay() -> BehaviorRelay<[ItemModel]> {
+        return interactor.getItemModelsRelay()
     }
     
-    func getNumberOfItemModels() -> Int {
-        return interactor.getNumberOfItemModels()
-    }
-    
-    func getItemModelAt(indexPath: IndexPath) -> ItemModel {
-        return interactor.getItemModelAt(indexPath: indexPath)
-    }
-    
-    func getItemModels() -> [ItemModel]? {
-        return interactor.getItemModels()
+    func configureUserTalbeCell(cell: UserTableCell, itemModel: ItemModel) {
+        interactor.configureUserTalbeCell(cell: cell, itemModel: itemModel)
     }
     
     // MARK: SearchInteractorOutput
-    func reloadUserTableView() {
-        view.reloadUserTableView()
+    func finishedReloadUserTableView() {
+        view.finishedReloadUserTableView()
+    }
+    
+    func scrollUserTableViewToTop() {
+        view.scrollUserTableViewToTop()
     }
     
 }

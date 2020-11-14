@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import RxCocoa
 
 protocol SearchViewOutput {
 
@@ -17,14 +18,10 @@ protocol SearchViewOutput {
 
     func viewIsReady()
     
-    func searchUsersWith(keyword: String, sort: SortType, order: OrderType)
+    func searchUsersWith(keyword: String, sort: SortType, order: OrderType, isScrolled: Bool)
     
-    func resetSearchUserResult()
+    func getItemModelsRelay() -> BehaviorRelay<[ItemModel]>
     
-    func getNumberOfItemModels() -> Int
-    
-    func getItemModelAt(indexPath: IndexPath) -> ItemModel
-    
-    func getItemModels() -> [ItemModel]?
+    func configureUserTalbeCell(cell: UserTableCell, itemModel: ItemModel)
     
 }

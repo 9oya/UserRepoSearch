@@ -8,21 +8,35 @@
 
 import UIKit
 import RxSwift
+import RxCocoa
 
 class SearchInteractor: SearchInteractorInput {
 
     // MARK: - Properties
-    
     private var page = 1
     private let perPage = 20
-    private var numberOfItemModels = 0
     private var itemModels: [ItemModel]?
-//    private var searchModel: SearchModel?
+    private let itemModelsRelay = BehaviorRelay<[ItemModel]>(value: [ItemModel]())
     
     let disposeBag = DisposeBag()
     weak var output: SearchInteractorOutput!
     
-    private func createSearchModelObservable(request: URLRequest) -> Observable<SearchModel> {
+    // MARK: - Helpers
+    private func createObservableData(urlString: String) -> Observable<Data> {
+        return Observable.create { (observer) -> Disposable in
+            let url = URL(string: urlString)!
+            do {
+                let data = try Data(contentsOf: url)
+                observer.onNext(data)
+            } catch let error {
+                observer.onError(error)
+            }
+            observer.onCompleted()
+            return Disposables.create()
+        }
+    }
+    
+    private func createObservableDataWithType<T: Codable>(request: URLRequest, type: T.Type) -> Observable<T> {
         return Observable.create { (observer) -> Disposable in
             let dataTask = URLSession(configuration: .default).dataTask(with: request, completionHandler: { (data, response, error) in
                 if error != nil {
@@ -31,13 +45,16 @@ class SearchInteractor: SearchInteractorInput {
                 if let data = data, let response = response as? HTTPURLResponse {
                     if response.statusCode == HTTPStatus.ok.rawValue {
                         do {
-                            let searchModel = try JSONDecoder().decode(SearchModel.self, from: data)
-                            observer.onNext(searchModel)
+                            let resultModel = try JSONDecoder().decode(type, from: data)
+                            observer.onNext(resultModel)
                         } catch let error {
                             observer.onError(error)
                         }
-                        observer.onCompleted()
+                    } else {
+                        let error = NSError(domain: "", code: response.statusCode, userInfo: [NSLocalizedDescriptionKey: String(decoding: data, as: UTF8.self)]) as Error
+                        observer.onError(error)
                     }
+                    observer.onCompleted()
                 }
             })
             dataTask.resume()
@@ -47,89 +64,97 @@ class SearchInteractor: SearchInteractorInput {
         }
     }
     
+    private func downloadProfileImage(_ itemModel: ItemModel, _ cell: UserTableCell? = nil) {
+        self.createObservableData(urlString: itemModel.avatar_url)
+            .observeOn(MainScheduler.instance)
+            .subscribe { (data) in
+                if cell != nil {
+                    cell!.profileImgView.image = UIImage(data: data)
+                } else {
+                    itemModel.avatarUrlData = data
+                }
+            } onError: { (error) in
+                print(error.localizedDescription)
+            }.disposed(by: self.disposeBag)
+    }
+    
+    private func downloadReposCount(_ itemModel: ItemModel, _ cell: UserTableCell? = nil) {
+        let request = APIRouter.getUserInfo(
+            authId: BasicAuth.username.rawValue,
+            authPw: BasicAuth.password.rawValue,
+            username: itemModel.login)
+        self.createObservableDataWithType(request: request.asURLRequest(), type: UserModel.self)
+            .observeOn(MainScheduler.instance)
+            .subscribe { (userModel) in
+                if cell != nil {
+                    cell!.reposCntLabel.text = "Number of repos: \(userModel.public_repos)"
+                } else {
+                    itemModel.publicReposCnt = userModel.public_repos
+                }
+            } onError: { (error) in
+                print(error.localizedDescription)
+            }.disposed(by: self.disposeBag)
+    }
+    
     // MARK: SearchInteractorInput
-    func searchUsersWith(keyword: String, sort: SortType, order: OrderType) {
+    func searchUsersWith(keyword: String, sort: SortType, order: OrderType, isScrolled: Bool) {
+        page = !isScrolled ? 1 : page
         let request = APIRouter.searchUsers(
             authId: BasicAuth.username.rawValue,
             authPw: BasicAuth.password.rawValue,
             query: keyword,
             sort: sort,
             order: order,
-            page: self.page,
+            page: page,
             perPage: self.perPage)
-        createSearchModelObservable(request: request.asURLRequest())
+        createObservableDataWithType(request: request.asURLRequest(), type: SearchModel.self)
+            .observeOn(MainScheduler.instance)
             .subscribe(onNext: { (searchModel) in
+                
+                DispatchQueue.global().async {
+                    searchModel.items.forEach {
+                        self.downloadProfileImage($0)
+                        self.downloadReposCount($0)
+                    }
+                }
+                
                 self.page += 1
-                self.numberOfItemModels += searchModel.total_count
-                self.itemModels = self.itemModels != nil ? (searchModel.items != nil ? self.itemModels! + searchModel.items! : self.itemModels) : searchModel.items
+                self.itemModels = !isScrolled ? searchModel.items : (self.itemModels != nil ? self.itemModels! + searchModel.items : searchModel.items)
+                self.itemModelsRelay.accept(self.itemModels!)
+                
             }, onError: { (error) in
                 print(error.localizedDescription)
             }, onCompleted: {
-                self.output.reloadUserTableView()
+                if !isScrolled && self.itemModels?.count ?? 0 > 0 { self.output.scrollUserTableViewToTop() }
+                self.output.finishedReloadUserTableView()
             }).disposed(by: disposeBag)
     }
     
-    func resetSearchUserResult() {
-        page = 1
-        numberOfItemModels = 0
-        itemModels = nil
+    func getItemModelsRelay() -> BehaviorRelay<[ItemModel]> {
+        return itemModelsRelay
     }
     
-    func getNumberOfItemModels() -> Int {
-        return numberOfItemModels
-    }
-    
-    func getItemModelAt(indexPath: IndexPath) -> ItemModel {
-        return itemModels![indexPath.row]
-    }
-    
-    func getItemModels() -> [ItemModel]? {
-        return itemModels
-    }
-}
-
-//MARK: RequestObservable class
-public class RequestObservable {
-    private lazy var jsonDecoder = JSONDecoder()
-    private var urlSession: URLSession
-    public init(config:URLSessionConfiguration) {
-        urlSession = URLSession(configuration:
-                                    URLSessionConfiguration.default)
-    }
-    //MARK: function for URLSession takes
-    public func callAPI<ItemModel: Decodable>(request: URLRequest)
-    -> Observable<ItemModel> {
-        //MARK: creating our observable
-        return Observable.create { observer in
-            //MARK: create URLSession dataTask
-            let task = self.urlSession.dataTask(with: request) { (data,
-                                                                  response, error) in
-                if let httpResponse = response as? HTTPURLResponse{
-                    let statusCode = httpResponse.statusCode
-                    do {
-                        let _data = data ?? Data()
-                        if (200...399).contains(statusCode) {
-                            let objs = try self.jsonDecoder.decode(ItemModel.self, from:
-                                                                    _data)
-                            //MARK: observer onNext event
-                            observer.onNext(objs)
-                        }
-                        else {
-                            observer.onError(error!)
-                        }
-                    } catch {
-                        //MARK: observer onNext event
-                        observer.onError(error)
-                    }
-                }
-                //MARK: observer onCompleted event
-                observer.onCompleted()
+    func configureUserTalbeCell(cell: UserTableCell, itemModel: ItemModel) {
+        
+        cell.nickNameLabel.text = itemModel.login
+        
+        if let avatarUrlData = itemModel.avatarUrlData {
+            cell.profileImgView.image = UIImage(data: avatarUrlData)
+        } else {
+            cell.profileImgView.image = UIImage(named: "defualtImg") // ... remove cached image
+            DispatchQueue.global().async {
+                self.downloadProfileImage(itemModel, cell)
             }
-            task.resume()
-            //MARK: return our disposable
-            return Disposables.create {
-                task.cancel()
+        }
+        
+        if let reposCount = itemModel.publicReposCnt {
+            cell.reposCntLabel.text = "Number of repos: \(reposCount)"
+        } else {
+            cell.reposCntLabel.text = "Number of repos: ..." // ... remove cached text
+            DispatchQueue.global().async {
+                self.downloadReposCount(itemModel, cell)
             }
         }
     }
+    
 }

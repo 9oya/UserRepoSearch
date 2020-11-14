@@ -15,13 +15,13 @@ enum APIRouter {
     static let baseURL = "https://api.github.com"
     
     // MARK: Cases
-    case getAUser(authId: String, authPw: String, username: String)
+    case getUserInfo(authId: String, authPw: String, username: String)
     case searchUsers(authId: String, authPw: String, query: String, sort: SortType, order: OrderType, page: Int, perPage: Int)
     
     // MARK: HTTPMethod
     private var method: String {
         switch self {
-        case .getAUser, .searchUsers:
+        case .getUserInfo, .searchUsers:
             return "GET"
         }
     }
@@ -29,7 +29,7 @@ enum APIRouter {
     // MARK: Path
     private var path: String {
         switch self {
-        case .getAUser(_, _, let username):
+        case .getUserInfo(_, _, let username):
             return "/users/\(username)"
         case .searchUsers:
             return "/search/users"
@@ -39,7 +39,7 @@ enum APIRouter {
     // MARK: Parameters
     private var parameters: [String: Any]? {
         switch self {
-        case .getAUser, .searchUsers:
+        case .getUserInfo, .searchUsers:
             return nil
         }
     }
@@ -48,7 +48,7 @@ enum APIRouter {
     private var queryItems: [URLQueryItem]? {
         var queryItems = [URLQueryItem]()
         switch self {
-        case .getAUser:
+        case .getUserInfo:
             return nil
         case .searchUsers(_, _, let query, let sort, let order, let page, let perPage):
             queryItems.append(URLQueryItem(name: "q", value: query))
@@ -66,8 +66,9 @@ enum APIRouter {
     private func getAdditionalHttpHeaders() -> [(String, String)] {
         var headers = [(String, String)]()
         switch self {
-        case .getAUser, .searchUsers:
-            headers = [(String, String)]()
+        case .getUserInfo(let authId, let authPw, _), .searchUsers(let authId, let authPw, _, _, _, _, _):
+            let base64AuthString = "\(authId):\(authPw)".data(using: String.Encoding.utf8)!.base64EncodedString()
+            headers.append((HTTPHeaderField.authentication.rawValue, "Basic \(base64AuthString)"))
             return headers
         }
     }
@@ -91,7 +92,6 @@ enum APIRouter {
         urlRequest.httpMethod = method
         
         // Headers
-//        urlRequest.addValue(ContentType.json.rawValue, forHTTPHeaderField: HTTPHeaderField.acceptEncoding.rawValue)
         urlRequest.addValue(AcceptType.githubV3Json.rawValue, forHTTPHeaderField: HTTPHeaderField.acceptType.rawValue)
         let headers = getAdditionalHttpHeaders()
         headers.forEach { (header) in

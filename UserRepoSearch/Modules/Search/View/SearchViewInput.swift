@@ -15,5 +15,7 @@ protocol SearchViewInput: class {
 
     func setupInitialState()
     
-    func reloadUserTableView()
+    func finishedReloadUserTableView()
+    
+    func scrollUserTableViewToTop()
 }

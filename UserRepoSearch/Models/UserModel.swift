@@ -12,11 +12,11 @@ struct UserModel: Codable {
     let login: String
     let id: Int
     let node_id: String
-    let name: String
-    let company: String
-    let blog: String
-    let location: String
-    let email: String
+    let name: String?
+    let company: String?
+    let blog: String?
+    let location: String?
+    let email: String?
     let public_repos: Int
     let public_gists: Int
     let followers: Int
