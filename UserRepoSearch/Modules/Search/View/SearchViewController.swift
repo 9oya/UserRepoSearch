@@ -56,8 +56,16 @@ class SearchViewController: UIViewController, SearchViewInput, UITableViewDelega
                 self.view.showSpinner()
             }).disposed(by: disposeBag)
         
+        userSearchBar.rx.searchButtonClicked
+            .asDriver(onErrorJustReturn: ())
+            .drive { _ in
+                self.userSearchBar.resignFirstResponder()
+            }.disposed(by: disposeBag)
+        
         userTableView.rx.contentOffset
             .subscribe(onNext: { offset in
+                
+                if self.lastContentOffsetY != 0 { self.userSearchBar.resignFirstResponder() }
                 
                 let contentSizeHeight = self.userTableView.contentSize.height
                 let edgeOfScrollToLoadMore = self.userTableView.frame.size.height + offset.y + 200
